@@ -1,143 +1,124 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Brain Enhancement Controller</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOC Detection Dashboard</title>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase SDKs (v9+ Modular)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    // -------------------- Firebase Configuration --------------------
+    const firebaseConfig = {
+      databaseURL: "https://cansat-ui-83544-default-rtdb.firebaseio.com/"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // -------------------- References to Database Paths --------------------
+    const mq3Ref = ref(database, "Sensors/MQ3");
+    const mq136Ref = ref(database, "Sensors/MQ136");
+    const tgs2602Ref = ref(database, "Sensors/TGS2602");
+    const statusRef = ref(database, "Sensors/Status");
+
+    // -------------------- Update Webpage in Real Time --------------------
+    onValue(mq3Ref, (snapshot) => {
+      document.getElementById("mq3").textContent = snapshot.val();
+    });
+
+    onValue(mq136Ref, (snapshot) => {
+      document.getElementById("mq136").textContent = snapshot.val();
+    });
+
+    onValue(tgs2602Ref, (snapshot) => {
+      document.getElementById("tgs2602").textContent = snapshot.val();
+    });
+
+    onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      const statusBox = document.getElementById("status");
+      statusBox.textContent = status;
+
+      if (status === "VOC Detected") {
+        statusBox.style.color = "#ff0000";
+        statusBox.style.fontWeight = "bold";
+      } else {
+        statusBox.style.color = "#00b300";
+        statusBox.style.fontWeight = "normal";
+      }
+    });
+  </script>
+
+  <!-- -------------------- Styling -------------------- -->
   <style>
-    :root{
-      --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --muted:#9aa8b3; --glass: rgba(255,255,255,0.03);
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #0e1117;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    body{
-      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#071124 0%, #071729 100%); color:#e6eef6; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    h1 {
+      color: #00bfff;
+      margin-bottom: 20px;
     }
-    .container{ width:920px; max-width:95%; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:28px; box-shadow: 0 10px 30px rgba(2,6,23,0.6);}
-    header{display:flex;align-items:center;gap:16px;margin-bottom:12px}
-    .logo{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#4dd6ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#052025}
-    h1{font-size:20px;margin:0}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
-
-    .main{display:flex;gap:22px;margin-top:18px;align-items:center}
-    .gauge{flex:1;background:var(--card);padding:18px;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.02)}
-    .controls{width:320px;background:var(--card);padding:18px;border-radius:12px}
-    .dial{display:flex;flex-direction:column;align-items:center;gap:10px}
-    .value-display{font-size:42px;font-weight:700;color:var(--accent)}
-    .desc{font-size:13px;color:var(--muted)}
-
-    /* Stylish slider/gauge */
-    .slider-wrap{width:100%;padding:18px 6px}
-    input[type="range"]{
-      -webkit-appearance:none;width:100%;height:12px;border-radius:999px;background:linear-gradient(90deg,#1b2b36 0%, #09141a 100%);outline:none;margin:8px 0;
+    .sensor-card {
+      background: #1c1f26;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 191, 255, 0.2);
+      padding: 20px 40px;
+      margin: 10px;
+      text-align: center;
+      transition: 0.3s ease-in-out;
     }
-    input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance:none;appearance:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(180deg,#fff,#e6f7f2);box-shadow:0 6px 18px rgba(0,0,0,0.6); border:6px solid var(--accent)
+    .sensor-card:hover {
+      transform: scale(1.05);
     }
-    .ticks{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:6px}
-    button.primary{width:100%;padding:12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#4dd6ff);font-size:16px;font-weight:700;color:#052025;cursor:pointer;box-shadow:0 8px 20px rgba(39,174,96,0.12)}
-    .small{font-size:13px;color:var(--muted); margin-top:12px; text-align:center}
-    .status{margin-top:10px;font-size:13px;color:var(--muted);text-align:center}
-    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
+    .label {
+      font-size: 18px;
+      color: #aaa;
+    }
+    .value {
+      font-size: 36px;
+      margin-top: 5px;
+    }
+    #status {
+      font-size: 24px;
+      margin-top: 15px;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo">BES</div>
-      <div>
-        <h1>Brain Enhancement Controller</h1>
-        <p class="lead">Select a binaural beat (Hz) and press <strong>Start</strong> to trigger the ESP32 via Firebase.</p>
-      </div>
-    </header>
+  <h1>VOC Gas Detection Dashboard</h1>
 
-    <div class="main">
-      <div class="gauge">
-        <div class="dial">
-          <div class="value-display" id="display">33 Hz</div>
-          <div class="desc">Binaural beat (difference between left & right channels)</div>
-
-          <div class="slider-wrap">
-            <!-- We use a range input with positions 0..4 and map to [0,33,38,40,44] -->
-            <input id="slider" type="range" min="0" max="4" step="1" value="1" />
-            <div class="ticks">
-              <span>0</span><span>33</span><span>38</span><span>40</span><span>44</span>
-            </div>
-          </div>
-
-          <div class="small">Tip: Use headphones for accurate binaural beat perception</div>
-        </div>
-      </div>
-
-      <div class="controls">
-        <div style="margin-bottom:12px">
-          <strong>Selected:</strong>
-          <div style="font-size:26px;color:var(--accent);" id="selected">33 Hz</div>
-        </div>
-
-        <button class="primary" id="startBtn">Start</button>
-        <div class="status" id="status">Not sent</div>
-
-        <div style="margin-top:14px">
-          <strong>Firebase DB:</strong>
-          <div style="font-size:13px;color:var(--muted);word-break:break-all;margin-top:6px">https://cansat-ui-83544-default-rtdb.firebaseio.com/</div>
-        </div>
-      </div>
-    </div>
-
-    <footer>Made for Brain Enhancement System • Values: 0, 33, 38, 40, 44</footer>
+  <div class="sensor-card">
+    <div class="label">MQ3 Sensor</div>
+    <div class="value" id="mq3">--</div>
   </div>
 
-<script>
-  // mapping slider index -> actual beat values
-  const values = [0, 33, 38, 40, 44];
-  const slider = document.getElementById('slider');
-  const display = document.getElementById('display');
-  const selected = document.getElementById('selected');
-  const status = document.getElementById('status');
-  const startBtn = document.getElementById('startBtn');
+  <div class="sensor-card">
+    <div class="label">MQ136 Sensor</div>
+    <div class="value" id="mq136">--</div>
+  </div>
 
-  // Firebase REST config (using provided auth & DB url)
-  const DB_URL = "https://cansat-ui-83544-default-rtdb.firebaseio.com";
-  const AUTH = "kbK8KWsvUDxO89eoBYMzEZxzSbtW9RVMd0szr9Jf"; // provided token
+  <div class="sensor-card">
+    <div class="label">TGS2602 Sensor</div>
+    <div class="value" id="tgs2602">--</div>
+  </div>
 
-  function updateDisplay(idx){
-    const v = values[idx];
-    display.textContent = v + " Hz";
-    selected.textContent = v + " Hz";
-  }
-
-  // init
-  updateDisplay(parseInt(slider.value));
-
-  slider.addEventListener('input', e => {
-    updateDisplay(parseInt(e.target.value));
-  });
-
-  startBtn.addEventListener('click', async () => {
-    const idx = parseInt(slider.value);
-    const v = values[idx];
-
-    status.textContent = "Sending...";
-    startBtn.disabled = true;
-
-    // Write both frequency and start flag in one atomic request (PUT to command)
-    const payload = { frequency: v, start: true };
-
-    try {
-      const res = await fetch(`${DB_URL}/command.json?auth=${AUTH}`, {
-        method: 'PUT', // replace "command" node
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error('Network response not ok');
-
-      status.textContent = `Sent: ${v} Hz — start triggered`;
-      setTimeout(()=>{ status.textContent = "Awaiting device response..."; startBtn.disabled=false; }, 600);
-    } catch (err) {
-      status.textContent = "Send failed: " + err.message;
-      console.error(err);
-      startBtn.disabled = false;
-    }
-  });
-</script>
+  <div class="sensor-card">
+    <div class="label">Air Quality Status</div>
+    <div class="value" id="status">Loading...</div>
+  </div>
 </body>
 </html>
